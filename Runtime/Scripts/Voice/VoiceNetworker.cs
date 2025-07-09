@@ -47,7 +47,7 @@ namespace ProximityChat
         }
 
         [Rpc(SendTo.NotMe)]
-        public void SendEncodedVoiceToOtherClients(byte[] encodedVoiceData)
+        public void SendEncodedVoiceToOtherClientsRpc(byte[] encodedVoiceData)
         {
             if (!IsOwner || _playbackOwnVoice)
             {
@@ -92,14 +92,14 @@ namespace ProximityChat
                 while (_voiceEncoder.HasVoiceLeftToEncode)
                 {
                     Span<byte> encodedVoice = _voiceEncoder.GetEncodedVoice();
-                    SendEncodedVoiceToOtherClients(encodedVoice.ToArray());
+                    SendEncodedVoiceToOtherClientsRpc(encodedVoice.ToArray());
                 }
                 // If we've stopped recording but there's still more left to be cleared,
                 // force encode it with silence
                 if (!_voiceRecorder.IsRecording && !_voiceEncoder.QueueIsEmpty)
                 {
                     Span<byte> encodedVoice = _voiceEncoder.GetEncodedVoice(true);
-                    SendEncodedVoiceToOtherClients(encodedVoice.ToArray());
+                    SendEncodedVoiceToOtherClientsRpc(encodedVoice.ToArray());
                 }
             }
         }
