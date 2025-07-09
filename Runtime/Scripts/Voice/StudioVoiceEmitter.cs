@@ -111,7 +111,15 @@ namespace ProximityChat
             if (_initialized)
             {
                 _voiceSound.release();
+                _voiceSound.clearHandle();
+                _voiceSound = default;
+
                 _voiceEventInstance.release();
+                _voiceEventInstance.stop(STOP_MODE.IMMEDIATE);
+                _voiceEventInstance.clearHandle();
+                _voiceEventInstance = default;
+
+                _voiceCallback = null;
             }
         }
     }
