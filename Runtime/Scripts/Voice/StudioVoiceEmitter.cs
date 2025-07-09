@@ -41,7 +41,7 @@ namespace ProximityChat
             _initialized = false;
             StartCoroutine(WaitToGetChannel());
             // Attach it to this to get spatial audio
-            RuntimeManager.AttachInstanceToGameObject(_voiceEventInstance, transform, true);
+            RuntimeManager.AttachInstanceToGameObject(_voiceEventInstance, gameObject, true);
         }
 
         /// <inheritdoc />
