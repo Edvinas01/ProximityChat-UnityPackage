@@ -46,14 +46,8 @@ namespace ProximityChat
             }
         }
 
-        [ServerRpc]
-        public void SendEncodedVoiceServerRpc(byte[] encodedVoiceData)
-        {
-            SendEncodedVoiceClientRpc(encodedVoiceData);   
-        }
-
-        [ClientRpc]
-        public void SendEncodedVoiceClientRpc(byte[] encodedVoiceData)
+        [Rpc(SendTo.NotMe)]
+        public void SendEncodedVoiceToOtherClients(byte[] encodedVoiceData)
         {
             if (!IsOwner || _playbackOwnVoice)
             {
@@ -70,7 +64,7 @@ namespace ProximityChat
             if (!IsOwner) return;
             _voiceRecorder.StartRecording();
         }
-        
+
         /// <summary>
         /// Stops recording and sending voice data over the network.
         /// </summary>
@@ -94,18 +88,18 @@ namespace ProximityChat
         {
             if (IsOwner)
             {
-                // Encode as much queued voice as possible 
+                // Encode as much queued voice as possible
                 while (_voiceEncoder.HasVoiceLeftToEncode)
                 {
                     Span<byte> encodedVoice = _voiceEncoder.GetEncodedVoice();
-                    SendEncodedVoiceServerRpc(encodedVoice.ToArray());
+                    SendEncodedVoiceToOtherClients(encodedVoice.ToArray());
                 }
                 // If we've stopped recording but there's still more left to be cleared,
                 // force encode it with silence
                 if (!_voiceRecorder.IsRecording && !_voiceEncoder.QueueIsEmpty)
                 {
                     Span<byte> encodedVoice = _voiceEncoder.GetEncodedVoice(true);
-                    SendEncodedVoiceServerRpc(encodedVoice.ToArray());
+                    SendEncodedVoiceToOtherClients(encodedVoice.ToArray());
                 }
             }
         }
