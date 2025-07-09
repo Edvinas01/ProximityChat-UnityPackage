@@ -23,13 +23,19 @@ namespace ProximityChat
         public override void Init(uint sampleRate = 48000, int channelCount = 1, VoiceFormat inputFormat = VoiceFormat.PCM16Samples)
         {
             base.Init(sampleRate, channelCount, inputFormat);
+
             // Wireup programmer instrument callback
             _voiceCallback = new EVENT_CALLBACK(VoiceEventCallback);
+
             // Create and initialize an instance of our FMOD voice event
             _voiceEventInstance = RuntimeManager.CreateInstance(_voiceEventReference);
             _voiceEventInstance.setCallback(_voiceCallback);
             _voiceEventInstance.start();
             _voiceEventInstance.setPaused(true);
+
+            var soundHandle = GCHandle.Alloc(_voiceSound, GCHandleType.Pinned);
+            _voiceEventInstance.setUserData(GCHandle.ToIntPtr(soundHandle));
+
             // We're not going to be officially initialized until our event instance
             // is created, which takes a little while, so let's re-flag ourself as uninitialized
             _initialized = false;
@@ -37,7 +43,7 @@ namespace ProximityChat
             // Attach it to this to get spatial audio
             RuntimeManager.AttachInstanceToGameObject(_voiceEventInstance, transform, true);
         }
-        
+
         /// <inheritdoc />
         public override void SetVolume(float volume)
         {
@@ -59,7 +65,7 @@ namespace ProximityChat
                 if (playbackState == PLAYBACK_STATE.PLAYING)
                     break;
             }
-            
+
             // Get the channel and initialize
             if (FMODUtilities.TryGetChannelForEvent(_voiceEventInstance, out Channel channel))
             {
@@ -80,8 +86,18 @@ namespace ProximityChat
                 // Pass the sound to the programmer instrument
                 case EVENT_CALLBACK_TYPE.CREATE_PROGRAMMER_SOUND:
                 {
+                    var instance = new EventInstance(instancePtr);
+                    instance.getUserData(out var soundPtr);
+
+                    if (soundPtr == IntPtr.Zero)
+                    {
+                        return RESULT.OK;
+                    }
+
+                    var soundHandle = GCHandle.FromIntPtr(soundPtr);
+                    var sound = (Sound)soundHandle.Target;
                     var parameter = (PROGRAMMER_SOUND_PROPERTIES)Marshal.PtrToStructure(parameterPtr, typeof(PROGRAMMER_SOUND_PROPERTIES));
-                    parameter.sound = _voiceSound.handle;
+                    parameter.sound = sound.handle;
                     parameter.subsoundIndex = -1;
                     Marshal.StructureToPtr(parameter, parameterPtr, false);
                     break;
